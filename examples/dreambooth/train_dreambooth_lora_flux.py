@@ -758,7 +758,7 @@ class DreamBoothDataset(Dataset):
                 transforms.Normalize([0.5], [0.5]),
             ]
         )
-        for image in self.instance_images:
+        for idx, image in enumerate(self.instance_images):
             image = exif_transpose(image)
             if not image.mode == "RGB":
                 image = image.convert("RGB")
@@ -773,6 +773,9 @@ class DreamBoothDataset(Dataset):
             else:
                 y1, x1, h, w = train_crop.get_params(image, (args.resolution, args.resolution))
                 image = crop(image, y1, x1, h, w)
+
+            image.save(f"train_image_{idx}.png")
+
             image = train_transforms(image)
             self.pixel_values.append(image)
 
@@ -991,7 +994,7 @@ def encode_prompt(
         text_input_ids=text_input_ids_list[1] if text_input_ids_list else None,
     )
 
-    text_ids = torch.zeros(batch_size, prompt_embeds.shape[1], 3).to(device=device, dtype=dtype)
+    text_ids = torch.zeros(batch_size, prompt_embeds.shape[1], 3).to(device=device if device is not None else text_encoders[1].device, dtype=dtype)
     text_ids = text_ids.repeat(num_images_per_prompt, 1, 1)
 
     return prompt_embeds, pooled_prompt_embeds, text_ids
